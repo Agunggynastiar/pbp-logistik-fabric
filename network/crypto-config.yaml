@@ -1,0 +1,24 @@
+# crypto-config.yaml
+OrdererOrgs:
+  - Name: Orderer
+    Domain: example.com
+    EnableNodeOUs: true
+    Specs:
+      - Hostname: orderer
+
+PeerOrgs:
+  - Name: BeaCukai
+    Domain: beacukai.example.com
+    EnableNodeOUs: true
+    Template:
+      Count: 1 # Jumlah Peer node untuk Bea Cukai
+    Users:
+      Count: 1 # Jumlah User biasa (selain admin)
+
+  - Name: Logistik
+    Domain: logistik.example.com
+    EnableNodeOUs: true
+    Template:
+      Count: 1 # Jumlah Peer node untuk Logistik
+    Users:
+      Count: 1 # Jumlah User biasa (selain admin)

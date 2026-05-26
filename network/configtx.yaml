@@ -1,0 +1,124 @@
+# configtx.yaml
+Organizations:
+  - &OrdererOrg
+    Name: OrdererOrg
+    ID: OrdererMSP
+    MSPDir: ./organizations/ordererOrganizations/example.com/msp
+    Policies:
+      Readers: {Type: Signature, Rule: "OR('OrdererMSP.member')"}
+      Writers: {Type: Signature, Rule: "OR('OrdererMSP.member')"}
+      Admins:  {Type: Signature, Rule: "OR('OrdererMSP.admin')"}
+    OrdererEndpoints:
+      - orderer.example.com:7050
+
+  - &BeaCukai
+    Name: BeaCukaiMSP
+    ID: BeaCukaiMSP
+    MSPDir: ./organizations/peerOrganizations/beacukai.example.com/msp
+    Policies:
+      Readers: {Type: Signature, Rule: "OR('BeaCukaiMSP.admin', 'BeaCukaiMSP.peer', 'BeaCukaiMSP.client')"}
+      Writers: {Type: Signature, Rule: "OR('BeaCukaiMSP.admin', 'BeaCukaiMSP.client')"}
+      Admins:  {Type: Signature, Rule: "OR('BeaCukaiMSP.admin')"}
+      Endorsement: {Type: Signature, Rule: "OR('BeaCukaiMSP.peer')"}
+
+  - &Logistik
+    Name: LogistikMSP
+    ID: LogistikMSP
+    MSPDir: ./organizations/peerOrganizations/logistik.example.com/msp
+    Policies:
+      Readers: {Type: Signature, Rule: "OR('LogistikMSP.admin', 'LogistikMSP.peer', 'LogistikMSP.client')"}
+      Writers: {Type: Signature, Rule: "OR('LogistikMSP.admin', 'LogistikMSP.client')"}
+      Admins:  {Type: Signature, Rule: "OR('LogistikMSP.admin')"}
+      Endorsement: {Type: Signature, Rule: "OR('LogistikMSP.peer')"}
+
+Capabilities:
+  Channel: &ChannelCapabilities
+    V2_0: true
+  Orderer: &OrdererCapabilities
+    V2_0: true
+  Application: &ApplicationCapabilities
+    V2_5: true
+
+Profiles:
+  LogistikGenesis:
+    Policies:
+      Readers:
+        Type: ImplicitMeta
+        Rule: "ANY Readers"
+      Writers:
+        Type: ImplicitMeta
+        Rule: "ANY Writers"
+      Admins:
+        Type: ImplicitMeta
+        Rule: "MAJORITY Admins"
+    Capabilities:
+      <<: *ChannelCapabilities
+    Orderer:
+      OrdererType: etcdraft
+      Addresses:
+        - orderer.example.com:7050
+      EtcdRaft:
+        Consenters:
+          - Host: orderer.example.com
+            Port: 7050
+            ClientTLSCert: ./organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
+            ServerTLSCert: ./organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
+      Organizations:
+        - *OrdererOrg
+      Capabilities:
+        <<: *OrdererCapabilities
+      Policies:
+        Readers:
+          Type: ImplicitMeta
+          Rule: "ANY Readers"
+        Writers:
+          Type: ImplicitMeta
+          Rule: "ANY Writers"
+        Admins:
+          Type: ImplicitMeta
+          Rule: "MAJORITY Admins"
+        BlockValidation:
+          Type: ImplicitMeta
+          Rule: "ANY Writers"
+    Consortiums:
+      LogistikConsortium:
+        Organizations:
+          - *BeaCukai
+          - *Logistik
+
+  LogistikChannel:
+    Consortium: LogistikConsortium
+    Policies:
+      Readers:
+        Type: ImplicitMeta
+        Rule: "ANY Readers"
+      Writers:
+        Type: ImplicitMeta
+        Rule: "ANY Writers"
+      Admins:
+        Type: ImplicitMeta
+        Rule: "MAJORITY Admins"
+    Capabilities:
+      <<: *ChannelCapabilities
+    Application:
+      Organizations:
+        - *BeaCukai
+        - *Logistik
+      Policies:
+        Readers:
+          Type: ImplicitMeta
+          Rule: "ANY Readers"
+        Writers:
+          Type: ImplicitMeta
+          Rule: "ANY Writers"
+        Admins:
+          Type: ImplicitMeta
+          Rule: "MAJORITY Admins"
+        LifecycleEndorsement:
+          Type: ImplicitMeta
+          Rule: "MAJORITY Endorsement"
+        Endorsement:
+          Type: ImplicitMeta
+          Rule: "MAJORITY Endorsement"
+      Capabilities:
+        <<: *ApplicationCapabilities
