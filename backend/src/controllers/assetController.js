@@ -1,29 +1,42 @@
 import { createFabricConnection } from '../config/fabric.js';
 
-// 1. Create Asset (POST)
+// 1. Create Asset (POST) - UPDATED 6 PARAMETERS
 export const createAsset = async (req, res) => {
     try {
-        const { id, nama, status, lokasi } = req.body;
+        // Ambil 6 variabel baru dari req.body sesuai request Smart Contract
+        const { id, pengirim, penerima, statusBarang, lokasiSaatIni, pemegangAset } = req.body;
 
-        if (!id || !nama || !status || !lokasi) {
-            return res.status(400).json({ message: "Semua field (id, nama, status, lokasi) wajib diisi!" });
+        // Validasi agar tidak ada field yang kosong
+        if (!id || !pengirim || !penerima || !statusBarang || !lokasiSaatIni || !pemegangAset) {
+            return res.status(400).json({ 
+                message: "Semua field (id, pengirim, penerima, statusBarang, lokasiSaatIni, pemegangAset) wajib diisi!" 
+            });
         }
 
         const { contract, gateway, client } = await createFabricConnection();
 
-        // Memanggil fungsi CreateAsset di Smart Contract Agung
         console.log(`--> Submitting CreateAsset Transaction untuk ID: ${id}`);
-        await contract.submitTransaction('CreateAsset', id, nama, status, lokasi);
-        console.log('--> Transaction committed successfully');
+        
+        // Urutan HARUS PERSIS seperti ini saat ditembak ke Fabric milik Agung
+        await contract.submitTransaction(
+            'CreateAsset', 
+            id, 
+            pengirim, 
+            penerima, 
+            statusBarang, 
+            lokasiSaatIni, 
+            pemegangAset
+        );
+        
+        console.log('--> Transaction committed successfully dengan 6 parameter');
 
-        // Selalu tutup koneksi setelah selesai
         gateway.close();
         client.close();
 
         res.status(201).json({
             success: true,
             message: `Asset ${id} berhasil dicatat di blockchain`,
-            data: { id, nama, status, lokasi }
+            data: { id, pengirim, penerima, statusBarang, lokasiSaatIni, pemegangAset }
         });
 
     } catch (error) {
@@ -32,7 +45,7 @@ export const createAsset = async (req, res) => {
     }
 };
 
-// 2. Read Asset By ID (GET)
+// 2. Read Asset By ID (GET) - Tetap sama
 export const getAssetById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -44,7 +57,6 @@ export const getAssetById = async (req, res) => {
         gateway.close();
         client.close();
 
-        // Mengubah bytes dari Fabric menjadi string JSON
         const resultString = new TextDecoder().decode(resultBytes);
         const assetData = JSON.parse(resultString);
 
